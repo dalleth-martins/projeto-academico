@@ -3,6 +3,8 @@ package com.tcc.accountservice.service;
 import com.tcc.accountservice.dto.CustomerRequestDTO;
 import com.tcc.accountservice.dto.CustomerResponseDTO;
 import com.tcc.accountservice.entidade.Customer;
+import com.tcc.accountservice.exception.CpfAlreadyExistsException;
+import com.tcc.accountservice.exception.CustomerNotFoundException;
 import com.tcc.accountservice.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,16 +16,16 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
 
     public CustomerResponseDTO cadastrar(CustomerRequestDTO request) {
-        if (customerRepository.existsByCpf(request.cpf())) {
-            throw new CpfAlreadyExistsException(request.cpf());
+        if (customerRepository.existsByCpf(request.getCpf())) {
+            throw new CpfAlreadyExistsException(request.getCpf());
         }
 
         Customer customer = Customer.builder()
-                .cpf(request.cpf())
-                .nome(request.nome())
-                .email(request.email())
-                .telefone(request.telefone())
-                .dataNascimento(request.dataNascimento())
+                .cpf(request.getCpf())
+                .nome(request.getNome())
+                .email(request.getEmail())
+                .telefone(request.getTelefone())
+                .dataNascimento(request.getDataNascimento())
                 .build();
 
         Customer salvo = customerRepository.save(customer);
