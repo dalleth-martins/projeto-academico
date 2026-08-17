@@ -1,7 +1,7 @@
 package com.tcc.accountservice.service;
 
-import com.tcc.accountservice.dto.CustomerRequestDTO;
-import com.tcc.accountservice.dto.CustomerResponseDTO;
+import com.tcc.accountservice.dto.request.CustomerRequestDTO;
+import com.tcc.accountservice.dto.response.CustomerResponseDTO;
 import com.tcc.accountservice.entidade.Customer;
 import com.tcc.accountservice.exception.CpfAlreadyExistsException;
 import com.tcc.accountservice.exception.CustomerNotFoundException;
@@ -15,13 +15,12 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
 
-    public CustomerResponseDTO cadastrar(CustomerRequestDTO request) {
-        if (customerRepository.existsByCpf(request.getCpf())) {
-            throw new CpfAlreadyExistsException(request.getCpf());
+    public CustomerResponseDTO cadastrarCliente(CustomerRequestDTO request) {
+        if (customerRepository.existsByDocumento(request.getDocumento())) {
+            throw new CpfAlreadyExistsException(request.getDocumento());
         }
-
         Customer customer = Customer.builder()
-                .cpf(request.getCpf())
+                .documento(request.getDocumento())
                 .nome(request.getNome())
                 .email(request.getEmail())
                 .telefone(request.getTelefone())
@@ -42,10 +41,24 @@ public class CustomerService {
         return customerRepository.existsById(id);
     }
 
+    public CustomerResponseDTO buscarPeloDocumento(String documento) {
+        return customerRepository.findByDocumento(documento)
+                .map(customer -> {
+                    CustomerResponseDTO dto = new CustomerResponseDTO();
+
+                    dto.setId(customer.getId());
+                    dto.setNome(customer.getNome());
+                    dto.setDocumento(customer.getDocumento());
+
+                    return dto;
+                })
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+    }
+
     private CustomerResponseDTO toResponseDTO(Customer customer) {
         return new CustomerResponseDTO(
                 customer.getId(),
-                customer.getCpf(),
+                customer.getDocumento(),
                 customer.getNome(),
                 customer.getEmail(),
                 customer.getTelefone(),

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface CustomerRepository extends MongoRepository<Customer, String> {
 
-    boolean existsByCpf(String cpf);
+    boolean existsByDocumento(String cpf);
 
-    Optional<Customer> findByCpf(String cpf);
+    Optional<Customer> findByDocumento(String cpf);
 }

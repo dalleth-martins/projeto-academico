@@ -1,4 +1,4 @@
-package com.tcc.accountservice.dto;
+package com.tcc.accountservice.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -17,9 +17,8 @@ public class CustomerRequestDTO{
 
         @NotBlank(message = "CPF é obrigatório")
         @Pattern(regexp = "\\d{11}", message = "CPF deve conter 11 dígitos numéricos")
-        String cpf;
+        String documento;
 
-        @NotBlank(message = "Nome é obrigatório")
         String nome;
 
         @NotBlank(message = "E-mail é obrigatório")

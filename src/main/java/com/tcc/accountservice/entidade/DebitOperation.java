@@ -1,39 +1,36 @@
 package com.tcc.accountservice.entidade;
 
+import com.tcc.accountservice.enums.DebitOperationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "customers")
-public class Customer {
-
+@Document(collection = "debit_operations")
+public class DebitOperation {
     @Id
     private String id;
 
     @Indexed(unique = true)
-    private String documento;
+    private String idempotencyKey;
 
-    private String nome;
+    private String contaId;
 
-    @Indexed(unique = true)
-    private String email;
+    private BigDecimal valor;
 
-    private String telefone;
+    private BigDecimal saldoApos;
 
-    private LocalDate dataNascimento;
+    private DebitOperationStatus status;
 
-    @CreatedDate
-    private LocalDateTime criadoEm;
+    private LocalDateTime processadoEm;
 }

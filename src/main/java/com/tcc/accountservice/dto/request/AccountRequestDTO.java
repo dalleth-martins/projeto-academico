@@ -1,4 +1,4 @@
-package com.tcc.accountservice.dto;
+package com.tcc.accountservice.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

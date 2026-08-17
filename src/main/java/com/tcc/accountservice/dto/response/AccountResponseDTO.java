@@ -1,5 +1,6 @@
-package com.tcc.accountservice.dto;
+package com.tcc.accountservice.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tcc.accountservice.enums.AccountStatus;
 import com.tcc.accountservice.enums.AccountType;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,8 @@ public class AccountResponseDTO {
     AccountType tipo;
     AccountStatus status;
     BigDecimal saldo;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     LocalDateTime criadoEm;
 
 }
