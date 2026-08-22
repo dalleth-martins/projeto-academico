@@ -1,10 +1,10 @@
 package com.tcc.accountservice.repository;
 
-import com.tcc.accountservice.entidade.DebitOperation;
+import com.tcc.accountservice.entidade.AccountOperation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
 
-public interface DebitOperationRepository extends MongoRepository<DebitOperation, String> {
-    Optional<DebitOperation> findByIdempotencyKey(String idempotencyKey);
+public interface DebitOperationRepository extends MongoRepository<AccountOperation, String> {
+    Optional<AccountOperation> findByIdempotencyKey(String idempotencyKey);
 }

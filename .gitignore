@@ -76,6 +76,5 @@ Thumbs.db
 # =========================
 # Configurações locais
 # =========================
-application-local.yml
-application-local.yaml
+
 application-local.properties

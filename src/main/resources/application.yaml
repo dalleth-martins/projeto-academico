@@ -1,15 +1,15 @@
 spring:
+  profiles:
+    default: local
   application:
     name: account-service
-  data:
-    mongodb:
-      uri: ${MONGODB_URI}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
+
   endpoint:
     health:
       show-details: always

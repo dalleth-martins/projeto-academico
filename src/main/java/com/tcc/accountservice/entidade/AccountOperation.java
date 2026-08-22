@@ -1,6 +1,7 @@
 package com.tcc.accountservice.entidade;
 
-import com.tcc.accountservice.enums.DebitOperationStatus;
+import com.tcc.accountservice.enums.OperationType;
+import com.tcc.accountservice.enums.TransactionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,20 +18,22 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "debit_operations")
-public class DebitOperation {
+public class AccountOperation {
     @Id
     private String id;
 
     @Indexed(unique = true)
     private String idempotencyKey;
 
-    private String contaId;
+    private String transactionId;
 
-    private BigDecimal valor;
+    private String accountId;
 
-    private BigDecimal saldoApos;
+    private OperationType type;
 
-    private DebitOperationStatus status;
+    private BigDecimal amount;
 
-    private LocalDateTime processadoEm;
+    private TransactionStatus status;
+
+    private LocalDateTime processedAt;
 }

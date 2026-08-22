@@ -7,7 +7,7 @@ import com.tcc.accountservice.dto.request.DebitRequestDTO;
 import com.tcc.accountservice.dto.response.AccountResponseDTO;
 import com.tcc.accountservice.dto.response.DebitResponseDTO;
 import com.tcc.accountservice.entidade.Account;
-import com.tcc.accountservice.entidade.DebitOperation;
+import com.tcc.accountservice.entidade.AccountOperation;
 import com.tcc.accountservice.enums.AccountStatus;
 import com.tcc.accountservice.enums.AccountType;
 import com.tcc.accountservice.enums.DebitOperationStatus;
@@ -78,7 +78,7 @@ public class AccountService {
 
     public DebitResponseDTO debitar(String contaId, DebitRequestDTO request) {
 
-        DebitOperation operacao = DebitOperation.builder()
+        AccountOperation operacao = AccountOperation.builder()
                 .idempotencyKey(request.getIdempotencyKey())
                 .contaId(contaId)
                 .valor(request.getValor())
@@ -140,7 +140,7 @@ public class AccountService {
         );
     }
 
-    private DebitResponseDTO toDebitResponseDTO(DebitOperation operacao) {
+    private DebitResponseDTO toDebitResponseDTO(AccountOperation operacao) {
         return DebitResponseDTO.builder()
                 .contaId(operacao.getContaId())
                 .valor(operacao.getValor())
@@ -150,4 +150,5 @@ public class AccountService {
                 .processadoEm(operacao.getProcessadoEm())
                 .build();
     }
+
 }
