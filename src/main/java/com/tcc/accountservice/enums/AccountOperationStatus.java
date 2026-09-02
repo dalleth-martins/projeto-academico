@@ -1,6 +1,6 @@
 package com.tcc.accountservice.enums;
 
-public enum DebitOperationStatus {
+public enum AccountOperationStatus {
     PROCESSANDO,
     CONCLUIDO,
     FALHOU_SALDO_INSUFICIENTE,

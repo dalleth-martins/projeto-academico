@@ -1,5 +1,6 @@
 package com.tcc.accountservice.entidade;
 
+import com.tcc.accountservice.enums.AccountOperationStatus;
 import com.tcc.accountservice.enums.OperationType;
 import com.tcc.accountservice.enums.TransactionStatus;
 import lombok.AllArgsConstructor;
@@ -33,7 +34,7 @@ public class AccountOperation {
 
     private BigDecimal amount;
 
-    private TransactionStatus status;
+    private AccountOperationStatus status;
 
     private LocalDateTime processedAt;
 }

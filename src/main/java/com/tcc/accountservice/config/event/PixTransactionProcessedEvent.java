@@ -1,11 +1,19 @@
 package com.tcc.accountservice.config.event;
 
 
-import com.tcc.accountservice.enums.TransactionStatus;
+import com.tcc.accountservice.enums.AccountOperationStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
 public class PixTransactionProcessedEvent {
     private String transactionId;
     private String idempotencyKey;
-    private TransactionStatus status;
+    private AccountOperationStatus status;
     private String message;
 }

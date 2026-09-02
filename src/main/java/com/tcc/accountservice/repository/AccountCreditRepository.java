@@ -15,20 +15,29 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class AccountDebitRepository {
+public class AccountCreditRepository {
 
     private final MongoTemplate mongoTemplate;
 
-    public Optional<Account> debitarSeSaldoSuficiente(
+    public Optional<Account> creditar(
             String accountId,
             BigDecimal amount
     ) {
 
-        Query query = new Query(Criteria.where("id").is(accountId).and("status").is(AccountStatus.ATIVA).and("saldo").gte(amount));
+        Query query = new Query(
+                Criteria.where("id").is(accountId)
+                        .and("status").is(AccountStatus.ATIVA)
+        );
 
-        Update update = new Update().inc("saldo", amount.negate());
+        Update update = new Update()
+                .inc("saldo", amount);
 
-        Account account = mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),Account.class);
+        Account account = mongoTemplate.findAndModify(
+                query,
+                update,
+                FindAndModifyOptions.options().returnNew(true),
+                Account.class
+        );
 
         return Optional.ofNullable(account);
     }

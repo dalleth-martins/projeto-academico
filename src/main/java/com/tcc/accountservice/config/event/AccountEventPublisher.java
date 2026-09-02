@@ -5,8 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
-import static com.tcc.accountservice.config.RabbitMQConfig.ACCOUNT_CREATED_ROUTING_KEY;
-import static com.tcc.accountservice.config.RabbitMQConfig.ACCOUNT_EXCHANGE;
+import static com.tcc.accountservice.config.RabbitMQConfig.*;
 
 @Component
 @RequiredArgsConstructor
@@ -19,5 +18,15 @@ public class AccountEventPublisher {
         log.info("Publicando evento AccountCreated para accountId={}", event.accountId);
 
         rabbitTemplate.convertAndSend(ACCOUNT_EXCHANGE, ACCOUNT_CREATED_ROUTING_KEY, event);
+    }
+    public void publishPixTransactionProcessed(PixTransactionProcessedEvent event) {
+
+        log.info("Publicando resultado da transação Pix. transactionId={} status={}",event.getTransactionId(),event.getStatus());
+
+        rabbitTemplate.convertAndSend(
+                PIX_TRANSACTION_EXCHANGE,
+                PIX_TRANSACTION_PROCESSED_ROUTING_KEY,
+                event
+        );
     }
 }
