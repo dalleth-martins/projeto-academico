@@ -1,4 +1,4 @@
-package com.tcc.accountservice.config.event;
+package com.tcc.accountservice.rabbitMq.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;

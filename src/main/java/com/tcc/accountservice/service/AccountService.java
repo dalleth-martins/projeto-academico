@@ -1,9 +1,9 @@
 package com.tcc.accountservice.service;
 
-import com.tcc.accountservice.config.event.AccountCreatedEvent;
-import com.tcc.accountservice.config.event.AccountEventPublisher;
-import com.tcc.accountservice.config.event.PixTransactionProcessedEvent;
-import com.tcc.accountservice.config.event.PixTransactionRequestedEvent;
+import com.tcc.accountservice.rabbitMq.event.AccountCreatedEvent;
+import com.tcc.accountservice.rabbitMq.event.AccountEventPublisher;
+import com.tcc.accountservice.rabbitMq.event.PixTransactionProcessedEvent;
+import com.tcc.accountservice.rabbitMq.event.PixTransactionRequestedEvent;
 import com.tcc.accountservice.dto.request.AccountRequestDTO;
 import com.tcc.accountservice.dto.request.DebitRequestDTO;
 import com.tcc.accountservice.dto.response.AccountResponseDTO;
@@ -115,9 +115,7 @@ public class AccountService {
 
             return toDebitResponseDTO(
                     debitOperationRepository
-                            .findByIdempotencyKey(
-                                    request.getIdempotencyKey()
-                            )
+                            .findByIdempotencyKey(request.getIdempotencyKey())
                             .orElseThrow()
             );
         }
@@ -131,13 +129,16 @@ public class AccountService {
 
         if (debitado == null) {
 
-            boolean contaExiste = accountRepository.existsById(contaId);
+            boolean contaExiste =
+                    accountRepository.existsById(contaId);
 
             operacao.setStatus(
                     contaExiste
                             ? AccountOperationStatus.FALHOU_SALDO_INSUFICIENTE
                             : AccountOperationStatus.FALHOU_CONTA_INVALIDA
             );
+
+            operacao.setProcessedAt(LocalDateTime.now());
 
             debitOperationRepository.save(operacao);
 
@@ -148,8 +149,9 @@ public class AccountService {
             throw new SaldoInsuficienteException(contaId);
         }
 
-        operacao.setAmount(debitado.getSaldo());
+        operacao.setSaldoApos(debitado.getSaldo());
         operacao.setStatus(AccountOperationStatus.CONCLUIDO);
+        operacao.setProcessedAt(LocalDateTime.now());
 
         debitOperationRepository.save(operacao);
 
@@ -186,6 +188,7 @@ public class AccountService {
                 .transactionId(event.getTransactionId())
                 .idempotencyKey(event.getIdempotencyKey())
                 .accountId(event.getSourceAccountId())
+                .destinationAccountId(event.getDestinationAccountId())
                 .type(OperationType.DEBIT)
                 .amount(event.getAmount())
                 .status(AccountOperationStatus.PROCESSANDO)
@@ -219,38 +222,57 @@ public class AccountService {
             return;
         }
 
-        Account origem = accountDebitRepository
-                .debitarSeSaldoSuficiente(
-                        event.getSourceAccountId(),
-                        event.getAmount()
-                )
-                .orElseThrow(() ->
-                        new SaldoInsuficienteException(
-                                event.getSourceAccountId()
+        Account origem =
+                accountDebitRepository
+                        .debitarSeSaldoSuficiente(
+                                event.getSourceAccountId(),
+                                event.getAmount()
                         )
-                );
+                        .orElse(null);
 
-        Account destino = accountCreditRepository
-                .creditar(
-                        event.getDestinationAccountId(),
-                        event.getAmount()
-                )
-                .orElseThrow(() ->
-                        new AccountNotFoundException(
-                                event.getDestinationAccountId()
+        if (origem == null) {
+
+            boolean contaExiste =
+                    accountRepository.existsById(
+                            event.getSourceAccountId()
+                    );
+
+            operacao.setStatus(
+                    contaExiste
+                            ? AccountOperationStatus.FALHOU_SALDO_INSUFICIENTE
+                            : AccountOperationStatus.FALHOU_CONTA_INVALIDA
+            );
+
+            operacao.setProcessedAt(LocalDateTime.now());
+
+            accountOperationRepository.save(operacao);
+
+            publicarResultado(
+                    event,
+                    operacao.getStatus()
+            );
+
+            return;
+        }
+
+        Account destino =
+                accountCreditRepository
+                        .creditar(
+                                event.getDestinationAccountId(),
+                                event.getAmount()
                         )
-                );
+                        .orElseThrow(
+                                () -> new AccountNotFoundException(
+                                        event.getDestinationAccountId()
+                                )
+                        );
 
-        operacao.setStatus(
-                AccountOperationStatus.CONCLUIDO
-        );
 
-        operacao.setProcessedAt(
-                LocalDateTime.now()
-        );
+        operacao.setSaldoApos(origem.getSaldo());
+        operacao.setStatus(AccountOperationStatus.CONCLUIDO);
+        operacao.setProcessedAt(LocalDateTime.now());
 
         accountOperationRepository.save(operacao);
-
 
         log.info(
                 "Transação Pix concluída com sucesso. transactionId={}",
@@ -269,9 +291,10 @@ public class AccountService {
             AccountOperationStatus status
     ) {
 
-        String message = status == AccountOperationStatus.CONCLUIDO
-                ? "Transação processada com sucesso"
-                : "Transação não processada: " + status;
+        String message =
+                status == AccountOperationStatus.CONCLUIDO
+                        ? "Transação processada com sucesso"
+                        : "Transação não processada: " + status;
 
         eventPublisher.publishPixTransactionProcessed(
                 PixTransactionProcessedEvent.builder()
@@ -300,6 +323,7 @@ public class AccountService {
         );
     }
 
+
     private DebitResponseDTO toDebitResponseDTO(
             AccountOperation operacao
     ) {
@@ -307,7 +331,7 @@ public class AccountService {
         return DebitResponseDTO.builder()
                 .contaId(operacao.getAccountId())
                 .valor(operacao.getAmount())
-                .saldoApos(operacao.getAmount())
+                .saldoApos(operacao.getSaldoApos())
                 .idempotencyKey(operacao.getIdempotencyKey())
                 .status(operacao.getStatus())
                 .processadoEm(operacao.getProcessedAt())

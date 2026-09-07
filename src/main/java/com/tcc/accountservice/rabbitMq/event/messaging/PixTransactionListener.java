@@ -1,7 +1,7 @@
-package com.tcc.accountservice.config.messaging;
+package com.tcc.accountservice.rabbitMq.event.messaging;
 
 import com.tcc.accountservice.config.RabbitMQConfig;
-import com.tcc.accountservice.config.event.PixTransactionRequestedEvent;
+import com.tcc.accountservice.rabbitMq.event.PixTransactionRequestedEvent;
 import com.tcc.accountservice.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -18,8 +18,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "debit_operations")
+@Document(collection = "account_operations")
 public class AccountOperation {
+
     @Id
     private String id;
 
@@ -30,9 +31,13 @@ public class AccountOperation {
 
     private String accountId;
 
+    private String destinationAccountId;
+
     private OperationType type;
 
     private BigDecimal amount;
+
+    private BigDecimal saldoApos;
 
     private AccountOperationStatus status;
 

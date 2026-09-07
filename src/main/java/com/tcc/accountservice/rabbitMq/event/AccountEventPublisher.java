@@ -1,4 +1,4 @@
-package com.tcc.accountservice.config.event;
+package com.tcc.accountservice.rabbitMq.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
