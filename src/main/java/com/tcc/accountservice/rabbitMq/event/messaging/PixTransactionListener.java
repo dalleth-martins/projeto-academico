@@ -27,6 +27,18 @@ public class PixTransactionListener {
                 event.getTransactionId()
         );
 
-        accountService.processarTransacao(event);
+        try {
+
+            accountService.processarTransacao(event);
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Erro inesperado ao processar transação Pix. transactionId={}",
+                    event.getTransactionId(), e
+            );
+
+            throw e;
+        }
     }
 }

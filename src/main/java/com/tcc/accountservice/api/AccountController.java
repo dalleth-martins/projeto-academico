@@ -1,6 +1,8 @@
 package com.tcc.accountservice.api;
 
 import com.tcc.accountservice.dto.request.AccountRequestDTO;
+import com.tcc.accountservice.dto.request.BalanceResponseDTO;
+import com.tcc.accountservice.dto.request.CreditRequestDTO;
 import com.tcc.accountservice.dto.request.DebitRequestDTO;
 import com.tcc.accountservice.dto.response.AccountResponseDTO;
 import com.tcc.accountservice.dto.response.DebitResponseDTO;
@@ -37,11 +39,33 @@ public class AccountController {
         return ResponseEntity.ok(accountService.buscarPorId(id));
     }
 
-    @PostMapping("/{id}/debit")
-    public ResponseEntity<DebitResponseDTO> debitar(@PathVariable String id,
+    @PostMapping("/{accountId}/debit")
+    public ResponseEntity<DebitResponseDTO> debitar(@PathVariable String contaId,
                                                     @Valid @RequestBody DebitRequestDTO request) {
-        log.info("Solicitação de débito. contaId={} valor={}", id, request.getValor());
-        DebitResponseDTO response = accountService.debitar(id, request);
+        log.info("Solicitação de débito. contaId={} valor={}", contaId, request.getValor());
+        DebitResponseDTO response = accountService.debitar(contaId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{accountId}/credit")
+    public ResponseEntity<AccountResponseDTO> creditar(@PathVariable String accountId,
+                                                       @RequestBody CreditRequestDTO request) {
+
+        AccountResponseDTO response = accountService.creditar(accountId, request.getValor());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{accountId}/balance")
+    public ResponseEntity<BalanceResponseDTO> consultarSaldo(
+            @PathVariable String accountId) {
+
+        log.info("Solicitação de consulta de saldo. accountId={}", accountId);
+
+        BalanceResponseDTO response = accountService.consultarSaldo(accountId);
+
+        log.info("Saldo consultado com sucesso. accountId={} saldo={}", accountId, response.getSaldo());
+
         return ResponseEntity.ok(response);
     }
 }

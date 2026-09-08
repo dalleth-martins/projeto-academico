@@ -2,7 +2,9 @@ package com.tcc.accountservice.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -32,6 +34,19 @@ public class RabbitMQConfig {
     public static final String PIX_TRANSACTION_REQUESTED_QUEUE =
             "pix.transaction.requested.queue";
 
+    // --- Dead-letter: para onde vão mensagens que estouraram o limite de
+    // retry configurado em application.yaml (spring.rabbitmq.listener.simple.retry).
+    // Isso evita que um erro técnico (Mongo fora do ar, bug, etc.) faça a
+    // mesma mensagem ser reentregue para sempre.
+    public static final String PIX_TRANSACTION_DLX =
+            "pix.transaction.dlx";
+
+    public static final String PIX_TRANSACTION_REQUESTED_DLQ =
+            "pix.transaction.requested.dlq";
+
+    public static final String PIX_TRANSACTION_DLQ_ROUTING_KEY =
+            "pix.transaction.requested.dlq";
+
 
     @Bean
     public TopicExchange accountExchange() {
@@ -47,9 +62,21 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public DirectExchange pixTransactionDlx() {
+        return new DirectExchange(PIX_TRANSACTION_DLX, true, false);
+    }
+
+    @Bean
     public Queue pixTransactionRequestedQueue() {
-        return new Queue(PIX_TRANSACTION_REQUESTED_QUEUE, true
-        );
+        return QueueBuilder.durable(PIX_TRANSACTION_REQUESTED_QUEUE)
+                .withArgument("x-dead-letter-exchange", PIX_TRANSACTION_DLX)
+                .withArgument("x-dead-letter-routing-key", PIX_TRANSACTION_DLQ_ROUTING_KEY)
+                .build();
+    }
+
+    @Bean
+    public Queue pixTransactionRequestedDlq() {
+        return QueueBuilder.durable(PIX_TRANSACTION_REQUESTED_DLQ).build();
     }
 
     @Bean
@@ -61,6 +88,17 @@ public class RabbitMQConfig {
                 .bind(pixTransactionRequestedQueue)
                 .to(pixTransactionExchange)
                 .with(PIX_TRANSACTION_REQUESTED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding pixTransactionRequestedDlqBinding(
+            Queue pixTransactionRequestedDlq,
+            DirectExchange pixTransactionDlx
+    ) {
+        return BindingBuilder
+                .bind(pixTransactionRequestedDlq)
+                .to(pixTransactionDlx)
+                .with(PIX_TRANSACTION_DLQ_ROUTING_KEY);
     }
 
     @Bean

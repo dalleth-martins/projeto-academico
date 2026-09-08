@@ -3,6 +3,16 @@ spring:
     default: local
   application:
     name: account-service
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          multiplier: 2
+          max-interval: 10000
+        default-requeue-rejected: false
 
 management:
   endpoints:

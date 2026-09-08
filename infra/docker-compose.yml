@@ -12,6 +12,31 @@ services:
     volumes:
       - mongo_data:/data/db
       - ./mongo-keyfile:/etc/mongo-keyfile:ro
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "-u", "admin", "-p", "admin123", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping').ok" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+  mongo-rs-init:
+    image: mongo:7
+    container_name: account-service-mongo-rs-init
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: [ "bash", "-c" ]
+    command:
+      - |
+        mongosh --host mongodb:27017 -u admin -p admin123 --authenticationDatabase admin --quiet --eval '
+          try {
+            rs.status();
+            print("Replica set já inicializado, nada a fazer.");
+          } catch (e) {
+            print("Inicializando replica set rs0...");
+            rs.initiate({ _id: "rs0", members: [ { _id: 0, host: "mongodb:27017" } ] });
+          }
+        '
 
   rabbitmq:
     image: rabbitmq:3.13-management

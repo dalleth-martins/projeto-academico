@@ -2,7 +2,6 @@ package com.tcc.accountservice.entidade;
 
 import com.tcc.accountservice.enums.AccountOperationStatus;
 import com.tcc.accountservice.enums.OperationType;
-import com.tcc.accountservice.enums.TransactionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

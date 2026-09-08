@@ -19,13 +19,10 @@ public class AccountCreditRepository {
 
     private final MongoTemplate mongoTemplate;
 
-    public Optional<Account> creditar(
-            String accountId,
-            BigDecimal amount
-    ) {
+    public Optional<Account> creditar(String accountId, BigDecimal amount) {
 
         Query query = new Query(
-                Criteria.where("id").is(accountId)
+                Criteria.where("_id").is(accountId)
                         .and("status").is(AccountStatus.ATIVA)
         );
 
