@@ -45,18 +45,7 @@ public class AccountService {
     private final AccountOperationRepository accountOperationRepository;
     private final AccountCreditRepository accountCreditRepository;
 
-    /**
-     * Auto-injeção do proxy do Spring (não pode ser "final"/via construtor,
-     * senão vira dependência circular na inicialização do bean; @Lazy resolve
-     * isso adiando a busca do bean até o primeiro uso real).
-     * <p>
-     * Motivo: se processarTransacaoAtomicamente fosse chamado como
-     * "this.processarTransacaoAtomicamente(...)" dentro desta mesma classe,
-     * a chamada não passaria pelo proxy do Spring e o @Transactional seria
-     * silenciosamente ignorado (auto-invocação é uma limitação conhecida do
-     * AOP baseado em proxy). Chamando via "self.", garantimos que a chamada
-     * passe pelo proxy e a transação seja realmente aberta.
-     */
+
     @Autowired
     @Lazy
     private AccountService self;
@@ -200,18 +189,6 @@ public class AccountService {
         return numero;
     }
 
-    /**
-     * Orquestra o processamento de uma transação Pix recebida via evento.
-     * <p>
-     * Erros de negócio conhecidos (conta inválida, saldo insuficiente,
-     * corrida de idempotência) são tratados aqui e sempre resultam na
-     * publicação de um PixTransactionProcessedEvent — a mensagem é
-     * confirmada (ack) no RabbitMQ normalmente nesses casos.
-     * <p>
-     * Erros inesperados (falha de infraestrutura, bug) NÃO são capturados
-     * aqui de propósito: eles propagam para o PixTransactionListener, que
-     * decide entre retry e envio para a dead-letter queue.
-     */
     public void processarTransacao(PixTransactionRequestedEvent event) {
 
         log.info("Iniciando processamento da transação Pix. transactionId={}", event.getTransactionId());
@@ -234,15 +211,11 @@ public class AccountService {
 
         try {
 
-            // Chamada via "self", não "this" — ver comentário no campo self
-            // logo acima. É o que garante que o @Transactional do método
-            // abaixo realmente abra uma transação MongoDB.
             statusFinal = self.processarTransacaoAtomicamente(event);
 
         } catch (DuplicateKeyException e) {
 
-            // Outra thread/instância inseriu a mesma idempotencyKey entre
-            // o check acima e o insert dentro do método atômico.
+
             log.info("Operação já registrada por outra requisição concorrente. transactionId={} idempotencyKey={}",
                     event.getTransactionId(), event.getIdempotencyKey());
 
@@ -252,8 +225,6 @@ public class AccountService {
 
         } catch (AccountNotFoundException e) {
 
-            // Conta destino ficou inválida depois do débito na origem
-            // (rollback já ocorreu dentro do método atômico via @Transactional).
             log.warn("Transação revertida: conta inválida. transactionId={} motivo={}",
                     event.getTransactionId(), e.getMessage());
 
@@ -263,22 +234,6 @@ public class AccountService {
         publicarResultado(event, statusFinal);
     }
 
-    /**
-     * Executa o débito na origem + crédito no destino dentro de uma única
-     * transação MongoDB multi-documento (replica set configurado em
-     * infra/docker-compose.yml + MongoTransactionManager em MongoConfig).
-     * <p>
-     * Falhas de negócio conhecidas (saldo insuficiente, conta inválida)
-     * fazem o método retornar normalmente — a transação é COMMITADA com o
-     * status de falha já registrado, já que nenhum dinheiro chegou a ser
-     * movido nesses casos. Só lançamos exceção no cenário raro em que a
-     * conta destino se torna inválida DEPOIS do débito na origem: aí sim
-     * precisamos que a transação inteira reverta.
-     * <p>
-     * ATENÇÃO: nunca chame este método via "this.processarTransacaoAtomicamente(...)"
-     * dentro da própria classe — chame sempre via "self." (ver campo self
-     * acima), senão o @Transactional é ignorado silenciosamente.
-     */
     @Transactional
     public AccountOperationStatus processarTransacaoAtomicamente(PixTransactionRequestedEvent event) {
 
@@ -293,14 +248,8 @@ public class AccountService {
                 .processedAt(LocalDateTime.now())
                 .build();
 
-        // Se isto lançar DuplicateKeyException, nada mais foi persistido
-        // ou movimentado ainda — quem chamou (processarTransacao) trata a
-        // exceção consultando o registro já existente.
         accountOperationRepository.insert(operacao);
 
-        // Valida a conta destino ANTES de mexer em qualquer saldo. Evita o
-        // caso comum (destinationAccountId digitado errado) ter que passar
-        // pelo caminho de rollback via exceção lá embaixo.
         boolean destinoExiste = accountRepository.existsById(event.getDestinationAccountId());
 
         if (!destinoExiste) {
@@ -329,12 +278,6 @@ public class AccountService {
 
         if (destino == null) {
 
-            // Cenário raro: a conta destino existia no check acima mas
-            // ficou inválida (ex: desativada) entre o check e o crédito.
-            // O débito na origem já foi aplicado, então precisamos que a
-            // transação inteira reverta — por isso lançamos a exceção em
-            // vez de retornar um status. NÃO salvamos "operacao" aqui:
-            // qualquer save seria desfeito no rollback de qualquer forma.
             log.error("Conta destino tornou-se inválida após débito na origem — revertendo. " +
                             "transactionId={} destinationAccountId={}",
                     event.getTransactionId(), event.getDestinationAccountId());
