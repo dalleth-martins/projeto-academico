@@ -90,11 +90,11 @@ public class AccountService {
         return toResponseDTO(account);
     }
 
-    public DebitResponseDTO debitar(String contaId, DebitRequestDTO request) {
+    public DebitResponseDTO debitar(String accountId, DebitRequestDTO request) {
 
         AccountOperation operacao = AccountOperation.builder()
                 .idempotencyKey(request.getIdempotencyKey())
-                .accountId(contaId)
+                .accountId(accountId)
                 .amount(request.getValor())
                 .status(AccountOperationStatus.PROCESSANDO)
                 .processedAt(LocalDateTime.now())
@@ -111,11 +111,11 @@ public class AccountService {
             return toDebitResponseDTO(accountOperationRepository.findByIdempotencyKey(request.getIdempotencyKey()).orElseThrow());
         }
 
-        Account debitado = accountDebitRepository.debitarSeSaldoSuficiente(contaId, request.getValor()).orElse(null);
+        Account debitado = accountDebitRepository.debitarSeSaldoSuficiente(accountId, request.getValor()).orElse(null);
 
         if (debitado == null) {
 
-            boolean contaExiste = accountRepository.existsById(contaId);
+            boolean contaExiste = accountRepository.existsById(accountId);
 
             operacao.setStatus(contaExiste ? AccountOperationStatus.FALHOU_SALDO_INSUFICIENTE : AccountOperationStatus.FALHOU_CONTA_INVALIDA);
 
@@ -124,10 +124,10 @@ public class AccountService {
             accountOperationRepository.save(operacao);
 
             if (!contaExiste) {
-                throw new AccountNotFoundException(contaId);
+                throw new AccountNotFoundException(accountId);
             }
 
-            throw new SaldoInsuficienteException(contaId);
+            throw new SaldoInsuficienteException(accountId);
         }
 
         operacao.setSaldoApos(debitado.getSaldo());

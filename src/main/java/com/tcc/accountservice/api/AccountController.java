@@ -40,10 +40,10 @@ public class AccountController {
     }
 
     @PostMapping("/{accountId}/debit")
-    public ResponseEntity<DebitResponseDTO> debitar(@PathVariable String contaId,
+    public ResponseEntity<DebitResponseDTO> debitar(@PathVariable String accountId,
                                                     @Valid @RequestBody DebitRequestDTO request) {
-        log.info("Solicitação de débito. contaId={} valor={}", contaId, request.getValor());
-        DebitResponseDTO response = accountService.debitar(contaId, request);
+        log.info("Solicitação de débito. contaId={} valor={}", accountId, request.getValor());
+        DebitResponseDTO response = accountService.debitar(accountId, request);
         return ResponseEntity.ok(response);
     }
 

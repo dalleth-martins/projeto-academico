@@ -31,10 +31,10 @@ public class CustomerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CustomerResponseDTO> buscarPorId(@PathVariable String id) {
-        return ResponseEntity.ok(customerService.buscarPorId(id));
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<CustomerResponseDTO> buscarPorId(@PathVariable String id) {
+//        return ResponseEntity.ok(customerService.buscarPorId(id));
+//    }
 
 
     @GetMapping("/{documento}")
