@@ -6,6 +6,7 @@ spring:
   rabbitmq:
     listener:
       simple:
+        observation-enabled: true
         retry:
           enabled: true
           initial-interval: 1000
@@ -18,8 +19,34 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
-
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      # gera os buckets necessários para calcular p95/p99 no Prometheus/Grafana
+      percentiles-histogram:
+        http.server.requests: true
+  tracing:
+    # o padrão do Spring Boot é 0.1 (10%); em desenvolvimento/testes queremos 100%
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
+  otlp:
+    metrics:
+      export:
+        # as métricas são coletadas pelo Prometheus (scrape em /actuator/prometheus),
+        # então desligamos o envio de métricas via OTLP que o starter ativa por padrão
+        enabled: false
+
+# inclui traceId e spanId em cada linha de log, permitindo ligar log <-> trace
+logging:
+  pattern:
+    correlation: "[%X{traceId:-},%X{spanId:-}] "

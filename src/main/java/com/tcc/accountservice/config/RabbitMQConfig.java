@@ -115,6 +115,9 @@ public class RabbitMQConfig {
 
         template.setMessageConverter(converter);
 
+        // propaga o contexto do trace (traceparent) nos headers das mensagens
+        template.setObservationEnabled(true);
+
         return template;
     }
 }

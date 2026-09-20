@@ -14,6 +14,7 @@ import com.tcc.accountservice.enums.OperationType;
 import com.tcc.accountservice.exception.AccountNotFoundException;
 import com.tcc.accountservice.exception.CustomerNotFoundException;
 import com.tcc.accountservice.exception.SaldoInsuficienteException;
+import com.tcc.accountservice.metrics.AccountMetrics;
 import com.tcc.accountservice.rabbitMq.event.AccountCreatedEvent;
 import com.tcc.accountservice.rabbitMq.event.AccountEventPublisher;
 import com.tcc.accountservice.rabbitMq.event.PixTransactionProcessedEvent;
@@ -44,6 +45,7 @@ public class AccountService {
     private final AccountDebitRepository accountDebitRepository;
     private final AccountOperationRepository accountOperationRepository;
     private final AccountCreditRepository accountCreditRepository;
+    private final AccountMetrics accountMetrics;
 
 
     @Autowired
@@ -310,6 +312,8 @@ public class AccountService {
     }
 
     private void publicarResultado(PixTransactionRequestedEvent event, AccountOperationStatus status) {
+
+        accountMetrics.registrarResultado(status);
 
         String message = status == AccountOperationStatus.CONCLUIDO ? "Transação processada com sucesso" : "Transação não processada: " + status;
 
